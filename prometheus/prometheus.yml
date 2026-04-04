@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - 'alert.rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'athenis-backend'
+    metrics_path: '/metrics'
+    static_configs:
+      # Assume backend runs on port 8000 on host or via docker bridge
+      - targets: ['host.docker.internal:8000']
