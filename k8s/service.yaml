@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: athenis-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: athenis-backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: athenis-frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: athenis-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: athenis-backend
+  labels:
+    app: athenis-backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: athenis-backend
+  template:
+    metadata:
+      labels:
+        app: athenis-backend
+    spec:
+      containers:
+      - name: athenis-backend
+        image: your-registry/athenis-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: athenis-secrets
+        - configMapRef:
+            name: athenis-config
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: athenis-celery
+  labels:
+    app: athenis-celery
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: athenis-celery
+  template:
+    metadata:
+      labels:
+        app: athenis-celery
+    spec:
+      containers:
+      - name: athenis-celery
+        image: your-registry/athenis-backend:latest
+        command: ["celery", "-A", "backend.core.celery_app", "worker", "--loglevel=info"]
+        envFrom:
+        - secretRef:
+            name: athenis-secrets
+        - configMapRef:
+            name: athenis-config
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: athenis-frontend
+  labels:
+    app: athenis-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: athenis-frontend
+  template:
+    metadata:
+      labels:
+        app: athenis-frontend
+    spec:
+      containers:
+      - name: athenis-frontend
+        image: your-registry/athenis-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.athenis.com"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
