@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150x150/09090b/3b82f6?text=Athenis" alt="Athenis Logo" width="120" height="120" />
+  <img src="frontend/public/assets/logo.png" alt="Athenis Logo" width="120" height="120" style="border-radius: 20%;" />
   <h1>Athenis AI Platform</h1>
   <p><strong>Enterprise-Grade, Cloud-Native Hybrid RAG Engine with Multi-Tenant Architecture</strong></p>
 
@@ -11,6 +11,17 @@
   [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com)
   [![Kubernetes](https://img.shields.io/badge/Kubernetes-Supported-326CE5.svg?style=flat&logo=kubernetes&logoColor=white)](https://kubernetes.io)
   [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+</div>
+
+<br />
+
+### 📸 Application Interface
+<div align="center">
+  <img src="frontend/public/assets/dashboard.png" width="48%" alt="System Dashboard" />
+  <img src="frontend/public/assets/chat.png" width="48%" alt="Athenis Chat" />
+  <br/>
+  <img src="frontend/public/assets/admin.png" width="48%" alt="Knowledge Base" />
+  <img src="frontend/public/assets/login.png" width="48%" alt="Login Portal" />
 </div>
 
 <br />
@@ -45,6 +56,8 @@ By implementing **Hybrid Search (Vector + Full-Text Search)** merged via **Recip
 ---
 
 ## ✨ Key Features
+
+
 
 - **Hybrid Search RAG Engine:** Combines `pgvector` cosine similarity with PostgreSQL `tsvector` Full-Text Search (BM25) using Reciprocal Rank Fusion.
 - **Provider-Agnostic LLM Layer:** Powered by `litellm` to route requests dynamically across any foundation model.
