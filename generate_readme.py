@@ -1,4 +1,6 @@
-<div align="center">
+import os
+
+readme_content = """<div align="center">
   <img src="https://via.placeholder.com/150x150/09090b/3b82f6?text=Athenis" alt="Athenis Logo" width="120" height="120" />
   <h1>Athenis AI Platform</h1>
   <p><strong>Enterprise-Grade, Cloud-Native Hybrid RAG Engine with Multi-Tenant Architecture</strong></p>
@@ -374,3 +376,9 @@ kubectl apply -f k8s/service.yaml
 <div align="center">
   <p>Built with 🩵 by the Athenis Engineering Team.</p>
 </div>
+"""
+
+with open("README.md", "w") as f:
+    f.write(readme_content)
+
+print("Successfully wrote README.md")
