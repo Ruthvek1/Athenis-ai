@@ -15,6 +15,11 @@
 
 <br />
 
+> **📖 Note:** This repository includes the comprehensive technical architecture handbook of our project. 
+> You can download and read it here: [Athenis Technical Architecture Handbook (DOCX)](Athenis_Technical_Documentation.docx)
+
+<br />
+
 ### 📸 Application Interface
 <div align="center">
   <img src="frontend/public/assets/dashboard.png" width="48%" alt="System Dashboard" />
