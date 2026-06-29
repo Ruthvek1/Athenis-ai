@@ -20,7 +20,6 @@
   <img src="frontend/public/assets/dashboard.png" width="48%" alt="System Dashboard" />
   <img src="frontend/public/assets/chat.png" width="48%" alt="Athenis Chat" />
   <br/>
-  <img src="frontend/public/assets/admin.png" width="48%" alt="Knowledge Base" />
   <img src="frontend/public/assets/login.png" width="48%" alt="Login Portal" />
 </div>
 
