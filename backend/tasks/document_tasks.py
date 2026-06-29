@@ -61,11 +61,31 @@ def process_document(self, document_id: int, file_path: str, file_type: str, chu
         logger.info(f"Generating embeddings for {len(chunks)} chunks of document {document_id}")
         
         # Batch requests to OpenAI can handle multiple strings, but let's do it in manageable batches
-        batch_size = 100
+        batch_size = 10  # Reduced for Gemini Free Tier limits
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i:i+batch_size]
-            embeddings = EmbeddingService.get_embeddings(batch_chunks)
             
+            # Simple retry loop for rate limits
+            max_retries = 5
+            embeddings = None
+            for attempt in range(max_retries):
+                try:
+                    embeddings = EmbeddingService.get_embeddings(batch_chunks)
+                    break
+                except Exception as e:
+                    if "429" in str(e) or "RateLimit" in str(e) or "Quota" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        if attempt < max_retries - 1:
+                            wait_time = 10 * (attempt + 1)
+                            logger.warning(f"Rate limit hit. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                            time.sleep(wait_time)
+                        else:
+                            raise e
+                    else:
+                        raise e
+            
+            if embeddings is None:
+                raise Exception("Failed to generate embeddings after multiple retries.")
+                
             for j, (chunk_text, embedding) in enumerate(zip(batch_chunks, embeddings)):
                 doc_chunk = DocumentChunk(
                     document_id=document.id,
@@ -77,6 +97,10 @@ def process_document(self, document_id: int, file_path: str, file_type: str, chu
                 db.add(doc_chunk)
             
             db.commit()
+            
+            # Sleep to respect Gemini's 100 requests per minute limit (which is ~1.6 req/sec)
+            # Since we send 10 chunks per batch, sleeping 2 seconds keeps us safely under the limit
+            time.sleep(2)
             
         document.status = DocumentStatus.INDEXED
         db.commit()

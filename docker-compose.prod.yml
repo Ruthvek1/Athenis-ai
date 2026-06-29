@@ -27,8 +27,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: athenis-backend
     environment:
       - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-athenis}
@@ -36,6 +36,8 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - JWT_SECRET=${JWT_SECRET:-super_secret_production_key}
+    volumes:
+      - uploads_data:/app/backend/uploads
     ports:
       - "8000:8000"
     depends_on:
@@ -47,8 +49,8 @@ services:
 
   celery_worker:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: athenis-celery
     command: ["celery", "-A", "backend.core.celery_app", "worker", "--loglevel=info"]
     environment:
@@ -56,6 +58,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET=${JWT_SECRET:-super_secret_production_key}
+    volumes:
+      - uploads_data:/app/backend/uploads
     depends_on:
       - postgres
       - redis
@@ -81,6 +86,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   athenis_network:

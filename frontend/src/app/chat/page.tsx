@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, User, Bot, Loader2, LogOut, Settings } from "lucide-react";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Citation {
-  id: int;
+  id: number;
   filename: string;
-  chunk_index: int;
-  similarity_score: float;
+  chunk_index: number;
+  similarity_score: number;
 }
 
 interface Message {
@@ -131,7 +133,15 @@ export default function Chat() {
                       {msg.role === "user" ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
                     </div>
                     <div className={`p-4 rounded-2xl ${msg.role === "user" ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-100 border border-gray-700"}`}>
-                      <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      {msg.role === "user" ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      ) : (
+                        <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-700">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                       {msg.citations && msg.citations.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-gray-700 space-y-2">
                           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sources</p>
