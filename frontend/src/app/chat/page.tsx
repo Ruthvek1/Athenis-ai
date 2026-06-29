@@ -95,11 +95,11 @@ export default function Chat() {
         </div>
         <div className="p-4 border-t border-gray-800 space-y-2">
           <button 
-            onClick={() => router.push("/admin")}
+            onClick={() => router.push("/dashboard")}
             className="w-full flex items-center space-x-2 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
           >
             <Settings className="w-4 h-4" />
-            <span>Admin Dashboard</span>
+            <span>System Dashboard</span>
           </button>
           <button 
             onClick={handleLogout}
