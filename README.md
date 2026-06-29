@@ -372,5 +372,5 @@ kubectl apply -f k8s/service.yaml
 
 ---
 <div align="center">
-  <p>Built with 🩵 by the Athenis Engineering Team.</p>
+  <p>Built with 🩵 by the Athenis Engineering Team(Ruthvek Kannan).</p>
 </div>
