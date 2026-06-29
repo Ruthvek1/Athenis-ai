@@ -1,6 +1,4 @@
-# Athenis Enterprise Engineering Handbook
 
----
 
 # Chapter 1: The Business Problem
 
