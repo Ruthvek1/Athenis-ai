@@ -1,3 +1,38 @@
+<br><br><br><br><br><br><br>
+
+# **Athenis AI Platform**
+## Enterprise Engineering Architecture Handbook
+
+<br><br>
+**Prepared by:** Ruthvek Kannan  
+**Date:** June 2026  
+**Version:** 1.0.0 (Final Architecture Review)
+
+<br><br><br><br><br><br><br><br>
+
+> **CONFIDENTIALITY NOTICE**  
+> This handbook contains sensitive architectural topology and security threat models for the Athenis RAG Platform. Do not distribute outside of the core engineering team.
+
+```{=openxml}
+<w:p>
+  <w:r>
+    <w:br w:type="page"/>
+  </w:r>
+</w:p>
+```
+
+# Table of Contents
+*Note: Please right-click here in Microsoft Word and select "Update Field" -> "Update entire table" to generate the clickable Table of Contents.*
+
+```{=openxml}
+<w:p>
+  <w:r>
+    <w:br w:type="page"/>
+  </w:r>
+</w:p>
+```
+
+
 # Athenis Enterprise Engineering Handbook
 
 ---
@@ -56,6 +91,11 @@ To solve this, Athenis employs **Celery**. Celery is a distributed task queue th
 > **Production Recommendation**
 > In a production deployment, the Next.js container should be the only service exposed to the public internet (via an Ingress controller or Load Balancer). FastAPI, Celery, PostgreSQL, and Redis must remain strictly isolated within a private Virtual Private Cloud (VPC) subnet to prevent unauthorized external access.
 
+## 2.3 Comprehensive System Topology
+
+![Architecture Diagram](diagram_1.png)
+*Figure: System Visualization 1*
+
 
 # Chapter 3: Application Startup
 
@@ -67,6 +107,9 @@ When a DevOps engineer or deployment pipeline runs `docker compose up`, Athenis 
 3. **The API Gateway Boot**: Once the database connection pool is established and verified, FastAPI mounts its CORS middleware, configures its OpenTelemetry tracing hooks, and registers the REST API routers. It is now ready to receive connections.
 4. **The Worker Boot**: The Celery workers boot and immediately connect to Redis, signaling that they are ready to consume asynchronous jobs.
 5. **The Presentation Boot**: Finally, the Next.js frontend container boots, ready to serve HTML to the end-user browser.
+
+![Architecture Diagram](diagram_2.png)
+*Figure: System Visualization 2*
 
 > **Common Pitfall**
 > Attempting to bypass the Docker Compose `depends_on` directives (e.g., trying to boot FastAPI before PostgreSQL) will instantly crash the backend. FastAPI requires a valid database connection string during the instantiation of the SQLAlchemy session factory.
@@ -91,6 +134,9 @@ Next.js allows components to be rendered either on the server (node.js) or local
 Athenis strategically divides these approaches:
 - **Server Components**: The layout wrappers, heavy static assets, and initial HTML frames are pre-rendered on the server. This guarantees that the user sees a visually complete page almost instantly, drastically improving perceived performance.
 - **Client Components**: Interactive elements, such as the Chat input box and the JWT token managers, are decorated with the `"use client"` directive. These components must execute in the browser because they require access to the DOM (Document Object Model) and local browser storage mechanisms (like `localStorage`).
+
+![Architecture Diagram](diagram_3.png)
+*Figure: System Visualization 3*
 
 ## 4.2 Handling Global State
 In a traditional React application, a global state management library like Redux might be used. However, Athenis avoids this complexity by relying on lightweight React Hooks (like `useState` and `useEffect`) combined with secure token storage. 
@@ -147,8 +193,8 @@ Athenis implements RBAC through FastAPI Dependency Injection. Every secured API 
 4. If valid, the payload is decoded, and the `role` attribute is inspected.
 5. If the endpoint requires Admin privileges (such as `/api/v1/documents/upload`) and the token role is `user`, the dependency throws an HTTP 403 Forbidden exception, halting execution before the core logic is ever touched.
 
-![Architecture Diagram](diagram_1.png)
-*Figure: System Visualization 1*
+![Architecture Diagram](diagram_4.png)
+*Figure: System Visualization 4*
 
 > **Security Note**
 > Because JWTs are stateless, they cannot be easily revoked before they expire. If an employee is terminated, changing their password will not invalidate their existing JWT. For true enterprise security, Athenis should be extended to implement a "token blacklist" stored in Redis, allowing administrators to manually revoke specific tokens.
@@ -203,8 +249,8 @@ The row contains:
 
 Once all chunks are successfully inserted, the worker updates the parent document's status to `READY`, and the frontend dashboard reflects this completion visually to the administrator.
 
-![Architecture Diagram](diagram_2.png)
-*Figure: System Visualization 2*
+![Architecture Diagram](diagram_5.png)
+*Figure: System Visualization 5*
 
 > **Performance Note**
 > Embedding generation is extremely network-intensive. If your Celery worker is processing a large document, it may hit the rate limits of your LLM provider. Athenis implements automatic exponential backoff to handle HTTP 429 Too Many Requests errors gracefully.
@@ -235,8 +281,8 @@ The RRF algorithm assigns a score to every chunk based on its rank in the list:
 
 If a chunk appears in *both* lists (meaning it matches the semantic meaning AND the exact keywords), its scores are summed, propelling it to the absolute top of the final context window.
 
-![Architecture Diagram](diagram_3.png)
-*Figure: System Visualization 3*
+![Architecture Diagram](diagram_6.png)
+*Figure: System Visualization 6*
 
 * * *
 
@@ -274,6 +320,10 @@ Additionally, Athenis tracks raw numerical metrics:
 
 ## 11.3 Grafana Dashboards
 These metrics are scraped by Prometheus and visualized in Grafana. The Unified Admin Dashboard in the Athenis frontend actually embeds or mimics these metrics to provide administrators with a real-time view of system health and AI token expenditure.
+
+![Architecture Diagram](diagram_7.png)
+*Figure: System Visualization 7*
+
 
 * * *
 

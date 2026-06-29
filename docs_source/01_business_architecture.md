@@ -55,3 +55,51 @@ To solve this, Athenis employs **Celery**. Celery is a distributed task queue th
 
 > **Production Recommendation**
 > In a production deployment, the Next.js container should be the only service exposed to the public internet (via an Ingress controller or Load Balancer). FastAPI, Celery, PostgreSQL, and Redis must remain strictly isolated within a private Virtual Private Cloud (VPC) subnet to prevent unauthorized external access.
+
+## 2.3 Comprehensive System Topology
+
+```mermaid
+graph TB
+    subgraph Client Tier
+        U[End Users / Analysts]
+        A[Platform Administrators]
+    end
+
+    subgraph Presentation Tier
+        NextJS[Next.js Application Server]
+    end
+
+    subgraph API & Gateway Tier
+        FastAPI[FastAPI Gateway & Core Logic]
+    end
+
+    subgraph Asynchronous Processing Tier
+        Celery[Celery Distributed Workers]
+    end
+
+    subgraph Data & State Tier
+        PG[(PostgreSQL + pgvector)]
+        Redis[(Redis In-Memory Cache)]
+    end
+
+    subgraph External AI Services
+        LLM[LiteLLM Routing Engine]
+        Gemini[Google Gemini API]
+    end
+
+    U -->|HTTPS / JWT| NextJS
+    A -->|HTTPS / JWT| NextJS
+    NextJS -->|REST API| FastAPI
+    
+    FastAPI -->|Token verification & Caching| Redis
+    FastAPI -->|Relational Queries| PG
+    FastAPI -->|Dispatch Task| Redis
+    
+    Redis -->|Consume Task| Celery
+    Celery -->|Write Vectors| PG
+    Celery -->|Generate Embeddings| LLM
+    
+    FastAPI -->|Hybrid Search| PG
+    FastAPI -->|RAG Generation| LLM
+    LLM --> Gemini
+```

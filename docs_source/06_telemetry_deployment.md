@@ -16,6 +16,17 @@ Additionally, Athenis tracks raw numerical metrics:
 ## 11.3 Grafana Dashboards
 These metrics are scraped by Prometheus and visualized in Grafana. The Unified Admin Dashboard in the Athenis frontend actually embeds or mimics these metrics to provide administrators with a real-time view of system health and AI token expenditure.
 
+```mermaid
+graph LR
+    NextJS[Next.js] -->|Trace ID| FastAPI
+    FastAPI -->|DB Spans| PG[(PostgreSQL)]
+    FastAPI -->|Export Spans| OTel[OTel Collector]
+    Celery -->|Export Spans| OTel
+    OTel --> Prom[(Prometheus)]
+    Prom --> Grafana[Grafana Dashboards]
+```
+
+
 ---
 
 # Chapter 12: Deployment & Containerization Architecture

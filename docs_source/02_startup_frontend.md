@@ -9,6 +9,17 @@ When a DevOps engineer or deployment pipeline runs `docker compose up`, Athenis 
 4. **The Worker Boot**: The Celery workers boot and immediately connect to Redis, signaling that they are ready to consume asynchronous jobs.
 5. **The Presentation Boot**: Finally, the Next.js frontend container boots, ready to serve HTML to the end-user browser.
 
+```mermaid
+flowchart TD
+    Start([docker-compose up]) --> State[Boot Redis & PostgreSQL]
+    State --> CheckDB{DB Healthy?}
+    CheckDB -->|No| Wait[Wait 5s] --> CheckDB
+    CheckDB -->|Yes| FastAPI[Boot FastAPI Backend]
+    FastAPI --> Celery[Boot Celery Workers]
+    FastAPI --> NextJS[Boot Next.js Frontend]
+    NextJS --> Ready([System Ready])
+```
+
 > **Common Pitfall**
 > Attempting to bypass the Docker Compose `depends_on` directives (e.g., trying to boot FastAPI before PostgreSQL) will instantly crash the backend. FastAPI requires a valid database connection string during the instantiation of the SQLAlchemy session factory.
 
@@ -32,6 +43,20 @@ Next.js allows components to be rendered either on the server (node.js) or local
 Athenis strategically divides these approaches:
 - **Server Components**: The layout wrappers, heavy static assets, and initial HTML frames are pre-rendered on the server. This guarantees that the user sees a visually complete page almost instantly, drastically improving perceived performance.
 - **Client Components**: Interactive elements, such as the Chat input box and the JWT token managers, are decorated with the `"use client"` directive. These components must execute in the browser because they require access to the DOM (Document Object Model) and local browser storage mechanisms (like `localStorage`).
+
+```mermaid
+sequenceDiagram
+    actor Browser
+    participant Node as Next.js Server (SSR)
+    participant Client as React Client (CSR)
+    
+    Browser->>Node: GET /chat
+    Node->>Node: Pre-render static layout & HTML
+    Node-->>Browser: Return HTML payload (Fast)
+    Browser->>Client: Hydrate interactive components
+    Client->>Client: Check localStorage for JWT
+    Client-->>Browser: Render chat input interface
+```
 
 ## 4.2 Handling Global State
 In a traditional React application, a global state management library like Redux might be used. However, Athenis avoids this complexity by relying on lightweight React Hooks (like `useState` and `useEffect`) combined with secure token storage. 
