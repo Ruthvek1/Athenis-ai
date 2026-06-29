@@ -13,6 +13,8 @@ export default function Dashboard() {
     setIsMounted(true);
     if (!localStorage.getItem("token")) {
       router.push("/");
+    } else if (localStorage.getItem("role") !== "admin") {
+      router.push("/chat");
     }
   }, [router]);
 

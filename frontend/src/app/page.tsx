@@ -8,6 +8,7 @@ import axios from "axios";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
+  const [role, setRole] = useState("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,8 +30,28 @@ export default function Login() {
           headers: { "Content-Type": "application/x-www-form-urlencoded" }
         });
         
-        localStorage.setItem("token", response.data.access_token);
-        router.push("/chat");
+        const token = response.data.access_token;
+        
+        // Verify user role
+        const userResponse = await axios.get("http://localhost:8000/api/v1/auth/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const isAdmin = userResponse.data.is_admin;
+        
+        if (role === "admin" && !isAdmin) {
+          setError("Access Denied: You do not have administrator privileges.");
+          return;
+        }
+        
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", role);
+        
+        if (role === "admin") {
+          router.push("/dashboard");
+        } else {
+          router.push("/chat");
+        }
       } catch (err) {
         setError("Invalid credentials. Please try again.");
       }
@@ -38,7 +59,8 @@ export default function Login() {
       try {
         await axios.post("http://localhost:8000/api/v1/auth/register", {
           email,
-          password
+          password,
+          is_admin: role === "admin"
         });
         setSuccess("Account created! You can now log in.");
         setIsLogin(true);
@@ -76,7 +98,7 @@ export default function Login() {
           </div>
         )}
 
-        <div className="flex bg-gray-800 rounded-lg p-1 mb-6">
+        <div className="flex bg-gray-800 rounded-lg p-1 mb-4">
           <button
             onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
@@ -88,6 +110,23 @@ export default function Login() {
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${!isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
           >
             Register
+          </button>
+        </div>
+
+        <div className="flex bg-gray-950 rounded-lg p-1 mb-6 border border-gray-800">
+          <button
+            type="button"
+            onClick={() => setRole("user")}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${role === "user" ? "bg-blue-600 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
+          >
+            User Access
+          </button>
+          <button
+            type="button"
+            onClick={() => setRole("admin")}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${role === "admin" ? "bg-emerald-600 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
+          >
+            Admin Access
           </button>
         </div>
 

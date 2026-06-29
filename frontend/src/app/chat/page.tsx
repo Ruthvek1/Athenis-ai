@@ -26,12 +26,16 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!localStorage.getItem("token")) {
       router.push("/");
+    }
+    if (localStorage.getItem("role") === "admin") {
+      setIsAdmin(true);
     }
   }, [router]);
 
@@ -94,13 +98,15 @@ export default function Chat() {
           </button>
         </div>
         <div className="p-4 border-t border-gray-800 space-y-2">
-          <button 
-            onClick={() => router.push("/dashboard")}
-            className="w-full flex items-center space-x-2 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
-          >
-            <Settings className="w-4 h-4" />
-            <span>System Dashboard</span>
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={() => router.push("/dashboard")}
+              className="w-full flex items-center space-x-2 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"
+            >
+              <Settings className="w-4 h-4" />
+              <span>System Dashboard</span>
+            </button>
+          )}
           <button 
             onClick={handleLogout}
             className="w-full flex items-center space-x-2 text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-800"

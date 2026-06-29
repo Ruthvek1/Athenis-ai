@@ -34,6 +34,14 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    if (!localStorage.getItem("token")) {
+      router.push("/");
+      return;
+    } else if (localStorage.getItem("role") !== "admin") {
+      router.push("/chat");
+      return;
+    }
+
     fetchDocuments();
     // Poll for status updates
     const interval = setInterval(fetchDocuments, 3000);
