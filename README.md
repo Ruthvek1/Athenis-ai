@@ -62,46 +62,57 @@ The architecture follows a microservice-inspired decoupled monolith, optimized f
 
 ```mermaid
 graph TD
+    %% Styling Classes
+    classDef client fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef frontend fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef backend fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef db fill:#6366f1,stroke:#4338ca,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef ai fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef worker fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff,rx:8px,ry:8px
+    classDef monitor fill:#14b8a6,stroke:#0f766e,stroke-width:2px,color:#fff,rx:8px,ry:8px
+
     %% Users
-    U[User Client] -->|HTTPS| N[Next.js Frontend]
-    A[Admin Client] -->|HTTPS| N
+    U[👥 User Client]:::client -->|HTTPS| N[⚛️ Next.js Frontend]:::frontend
+    A[🛡️ Admin Client]:::client -->|HTTPS| N
     
     %% Frontend
     subgraph Frontend
-        N -->|REST / JWT| API[FastAPI Backend]
+        N -->|REST / JWT| API[⚡ FastAPI Backend]:::backend
     end
 
     %% Backend Core
     subgraph Backend [Athenis Core API]
-        API -->|Route| Auth[Auth Router]
-        API -->|Route| Chat[Chat & RAG Router]
-        API -->|Route| Docs[Document Router]
+        API -->|Route| Auth[🔒 Auth Router]:::backend
+        API -->|Route| Chat[💬 Chat & RAG Router]:::backend
+        API -->|Route| Docs[📄 Document Router]:::backend
         
-        Auth -->|Read/Write| DB[(PostgreSQL)]
+        Auth -->|Read/Write| DB[(🐘 PostgreSQL)]:::db
         Chat -->|Hybrid Search| DB
-        Chat -->|Token Sync| Redis[(Redis Cache)]
+        Chat -->|Token Sync| Redis[(🟥 Redis Cache)]:::db
     end
 
     %% AI Integrations
     subgraph AI Layer
-        Chat -->|LiteLLM| LLM[LLM Provider<br/>Gemini/OpenAI]
+        Chat -->|LiteLLM| LLM[🧠 LLM Provider <br/> Gemini/OpenAI]:::ai
     end
 
     %% Async Workers
     subgraph Background Processing
-        Docs -->|Task| Celery[Celery Worker]
-        Celery -->|Extract & Chunk| DocProcessor[Document Service]
+        Docs -->|Task| Celery[⚙️ Celery Worker]:::worker
+        Celery -->|Extract & Chunk| DocProcessor[🔄 Document Service]:::worker
         DocProcessor -->|Embed| LLM
         DocProcessor -->|Save pgvector & FTS| DB
     end
 
     %% Observability
     subgraph Observability
-        API -.->|OpenTelemetry| Prom[Prometheus]
+        API -.->|OpenTelemetry| Prom[📊 Prometheus]:::monitor
         Celery -.->|Metrics| Prom
-        Prom --> Grafana[Grafana Dashboards]
+        Prom --> Grafana[📈 Grafana Dashboards]:::monitor
     end
 ```
+
+> **Architecture Overview:** The Next.js frontend communicates via REST with a FastAPI backend. Time-consuming tasks like document embedding are offloaded to Celery workers, while LLM calls are routed abstractly through LiteLLM. Redis handles caching and rate-limiting, and PostgreSQL stores relational data and vector embeddings. OpenTelemetry tracks performance across the entire pipeline.
 
 ---
 
@@ -143,15 +154,16 @@ Athenis strictly isolates operational access. Users operate the AI agent; Admins
 
 ```mermaid
 sequenceDiagram
-    participant C as Client (Next.js)
-    participant A as Auth Router
-    participant D as Database
+    participant C as 🖥️ Client (Next.js)
+    participant A as 🛡️ Auth Router
+    participant D as 🐘 Database
 
-    C->>A: POST /api/v1/auth/login (email, password, role)
+    C->>A: POST /login (email, pass, role)
     A->>D: Fetch User
     D-->>A: User Hash & is_admin boolean
     A->>A: Verify Bcrypt Hash
     
+    rect rgb(16, 185, 129, 0.1)
     alt Role matches DB privileges
         A-->>C: 200 OK + JWT Token
         C->>C: Store in localStorage
@@ -160,48 +172,64 @@ sequenceDiagram
         else role == user
             C->>C: router.push("/chat")
         end
-    else Privilege Mismatch
+    end
+    end
+
+    rect rgb(239, 68, 68, 0.1)
+    alt Privilege Mismatch
         A-->>C: 403 Forbidden (Access Denied)
     end
+    end
 ```
+
+> **Security Flow:** Passwords are hashed using bcrypt. On successful login, a JWT is issued. The frontend checks the JWT against the `/me` endpoint to verify the user's `is_admin` status. If a regular user attempts to access the dashboard, they are forcefully redirected to the chat interface.
 
 ### 2. Async Document Ingestion Pipeline
 Uploading gigabytes of PDFs cannot block the API. We offload processing to Celery workers that chunk data, manage API rate limits, and index simultaneously into vector and FTS engines.
 
 ```mermaid
 flowchart TD
-    A[Admin Uploads File] --> B[FastAPI Endpoint]
-    B --> C{Verify Content Hash}
-    C -- Exists --> D[Skip & Return]
-    C -- New --> E[Save Temp File & Dispatch Celery Task]
+    classDef entry fill:#3b82f6,stroke:#1d4ed8,color:#fff
+    classDef check fill:#f59e0b,stroke:#b45309,color:#fff
+    classDef task fill:#8b5cf6,stroke:#6d28d9,color:#fff
+    classDef db fill:#10b981,stroke:#047857,color:#fff
+    classDef fail fill:#ef4444,stroke:#b91c1c,color:#fff
+
+    A[📤 Admin Uploads File]:::entry --> B[⚡ FastAPI Endpoint]:::entry
+    B --> C{🔍 Verify Content Hash}:::check
+    C -- Exists --> D[🛑 Skip & Return]
+    C -- New --> E[💾 Save Temp File & Dispatch Celery Task]:::task
     
-    E --> F[Worker: Extract Text PDF/Docx]
-    F --> G[Worker: Chunk Text w/ Overlap]
+    E --> F[📄 Worker: Extract Text PDF/Docx]:::task
+    F --> G[✂️ Worker: Chunk Text w/ Overlap]:::task
     
-    G --> H[Worker: Request Embeddings]
-    H -->|429 Rate Limit| I[Exponential Backoff Sleep]
+    G --> H[🧠 Worker: Request Embeddings]:::task
+    H -->|429 Rate Limit| I[⏳ Exponential Backoff Sleep]:::fail
     I --> H
     
-    H -->|Success| J[Save to PostgreSQL]
-    J --> K[Update pgvector embedding]
-    J --> L[Update GIN FTS tsvector]
+    H -->|Success| J[🐘 Save to PostgreSQL]:::db
+    J --> K[🔢 Update pgvector embedding]:::db
+    J --> L[🔍 Update GIN FTS tsvector]:::db
     
-    K & L --> M[Mark Document READY]
+    K & L --> M[✅ Mark Document READY]:::db
 ```
+
+> **Ingestion Details:** Once an admin uploads a file, a Celery worker takes over. The file is extracted (PDF/Word), chunked, and then embedded using the LiteLLM API. A resilient backoff strategy prevents rate-limit bans from foundation model providers.
 
 ### 3. Hybrid Search & Retrieval (RAG) Flow
 Athenis solves the "lost in the middle" and exact-match failures of pure vector search by combining it with BM25.
 
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant R as Retrieval Service
-    participant LLM as Embedding API
-    participant V as pgvector (Cosine)
-    participant F as Postgres FTS (BM25)
+    participant U as 👤 User
+    participant R as ⚙️ Retrieval Service
+    participant LLM as 🧠 Embedding API
+    participant V as 🔢 pgvector (Cosine)
+    participant F as 🔎 Postgres FTS (BM25)
     
     U->>R: "Explain the billing engine"
     
+    rect rgb(59, 130, 246, 0.1)
     par Vector Search
         R->>LLM: Embed Query
         LLM-->>R: Query Vector
@@ -211,10 +239,13 @@ sequenceDiagram
         R->>F: SELECT top 20 by ts_rank(websearch_to_tsquery)
         F-->>R: Keyword Results
     end
+    end
     
     R->>R: Apply Reciprocal Rank Fusion (RRF)
     R-->>U: Return top 5 fused chunks as LLM Context
 ```
+
+> **Reciprocal Rank Fusion (RRF):** Vector search is excellent at conceptual matching, while FTS (Full-Text Search) is perfect for exact keyword matches. Athenis fires both concurrently and mathematically merges the results using RRF to provide the LLM with the most relevant possible context.
 
 ---
 
@@ -245,6 +276,8 @@ erDiagram
         float cost_per_1k_prompt
     }
 ```
+
+> **Data Integrity:** The schema heavily utilizes Foreign Keys and cascading deletes. Deleting a document instantly wipes thousands of vector chunks across the database, preventing orphaned vectors. The `TenantQuota` table enables hard limits to protect against massive LLM billing costs.
 
 ---
 
