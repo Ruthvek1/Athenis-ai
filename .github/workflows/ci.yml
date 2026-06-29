@@ -24,6 +24,11 @@ jobs:
         pip install pytest httpx
         
     - name: Run tests
+      env:
+        DATABASE_URL: "postgresql+psycopg://user:password@localhost:5432/test_db"
+        REDIS_URL: "redis://localhost:6379/0"
+        JWT_SECRET: "test_secret"
+        GEMINI_API_KEY: "test_key"
       run: |
         cd backend && PYTHONPATH=.. pytest tests/
         
