@@ -59,7 +59,7 @@ jobs:
     - uses: actions/checkout@v3
     
     - name: Build Backend Docker Image
-      run: docker build -t athenis-backend:latest ./backend
+      run: docker build -t athenis-backend:latest -f ./backend/Dockerfile .
       
     - name: Build Frontend Docker Image
       run: docker build -t athenis-frontend:latest ./frontend
