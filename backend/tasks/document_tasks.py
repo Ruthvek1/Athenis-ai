@@ -9,6 +9,7 @@ from sqlalchemy import func
 import hashlib
 import os
 import time
+import gc
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,9 @@ def process_document(self, document_id: int, file_path: str, file_type: str, chu
         
         logger.info(f"Generating embeddings for {len(chunks)} chunks of document {document_id}")
         
-        # Batch requests to OpenAI can handle multiple strings, but let's do it in manageable batches
-        batch_size = 10  # Reduced for Gemini Free Tier limits
+        # Batch requests to OpenAI/Gemini can handle multiple strings, but let's do it in manageable batches
+        # Reduced to 5 to aggressively save memory on 512MB free tier hosting
+        batch_size = 5
         for i in range(0, len(chunks), batch_size):
             batch_chunks = chunks[i:i+batch_size]
             
@@ -98,9 +100,12 @@ def process_document(self, document_id: int, file_path: str, file_type: str, chu
             
             db.commit()
             
+            
             # Sleep to respect Gemini's 100 requests per minute limit (which is ~1.6 req/sec)
-            # Since we send 10 chunks per batch, sleeping 2 seconds keeps us safely under the limit
             time.sleep(2)
+            
+            # Force garbage collection to prevent OOM kills on memory-constrained environments
+            gc.collect()
             
         document.status = DocumentStatus.INDEXED
         db.commit()
