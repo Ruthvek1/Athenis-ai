@@ -1,3 +1,4 @@
+import ssl
 from celery import Celery
 from celery.signals import worker_process_init
 from backend.core.config import settings
@@ -21,6 +22,14 @@ celery_app.conf.update(
     # Let tasks execute at least once in case of worker failure
     task_acks_late=True,
 )
+
+# When using rediss:// (TLS), Celery requires explicit SSL configuration.
+# This is needed for cloud Redis providers like Upstash.
+if settings.REDIS_URL.startswith("rediss://"):
+    celery_app.conf.update(
+        broker_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
+        redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
+    )
 
 @worker_process_init.connect(weak=False)
 def init_celery_tracing(*args, **kwargs):
