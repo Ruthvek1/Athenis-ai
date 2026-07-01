@@ -4,7 +4,15 @@ from backend.core.config import settings
 
 # Initialize Redis client
 try:
-    redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    if settings.REDIS_URL and settings.REDIS_URL.startswith("rediss://"):
+        import ssl
+        redis_client = redis.from_url(
+            settings.REDIS_URL, 
+            decode_responses=True,
+            ssl_cert_reqs=ssl.CERT_NONE
+        )
+    else:
+        redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 except Exception as e:
     print(f"Warning: Redis connection failed: {e}")
     redis_client = None
