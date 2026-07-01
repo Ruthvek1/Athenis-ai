@@ -15,6 +15,19 @@ export default function Login() {
   const [success, setSuccess] = useState("");
   const router = useRouter();
 
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  // Pre-fill demo credentials
+  useEffect(() => {
+    if (isDemoMode) {
+      setEmail("admin@athenis.ai");
+      setPassword("demo123");
+      setRole("admin");
+      setIsLogin(true);
+    }
+  }, [isDemoMode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -26,14 +39,14 @@ export default function Login() {
         formData.append("username", email);
         formData.append("password", password);
         
-        const response = await axios.post("http://localhost:8000/api/v1/auth/login", formData, {
+        const response = await axios.post(`${API_URL}/api/v1/auth/login`, formData, {
           headers: { "Content-Type": "application/x-www-form-urlencoded" }
         });
         
         const token = response.data.access_token;
         
         // Verify user role
-        const userResponse = await axios.get("http://localhost:8000/api/v1/auth/me", {
+        const userResponse = await axios.get(`${API_URL}/api/v1/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -47,6 +60,20 @@ export default function Login() {
         localStorage.setItem("token", token);
         localStorage.setItem("role", role);
         
+        if (isDemoMode) {
+          try {
+            const docsResponse = await axios.get(`${API_URL}/api/v1/documents/`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (docsResponse.data.length === 0) {
+              router.push("/admin?demo_welcome=true");
+              return;
+            }
+          } catch (err) {
+            console.error("Failed to check documents", err);
+          }
+        }
+        
         if (role === "admin") {
           router.push("/dashboard");
         } else {
@@ -57,7 +84,7 @@ export default function Login() {
       }
     } else {
       try {
-        await axios.post("http://localhost:8000/api/v1/auth/register", {
+        await axios.post(`${API_URL}/api/v1/auth/register`, {
           email,
           password,
           is_admin: role === "admin"
@@ -98,20 +125,28 @@ export default function Login() {
           </div>
         )}
 
-        <div className="flex bg-gray-800 rounded-lg p-1 mb-4">
-          <button
-            onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${!isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
-          >
-            Register
-          </button>
-        </div>
+        {isDemoMode && (
+          <div className="bg-blue-500/10 border border-blue-500/50 text-blue-400 p-3 rounded-xl mb-6 text-sm text-center font-medium shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+            ✨ This is a demonstration environment. Log in using the pre-filled demo credentials.
+          </div>
+        )}
+
+        {!isDemoMode && (
+          <div className="flex bg-gray-800 rounded-lg p-1 mb-4">
+            <button
+              onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${!isLogin ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-gray-200"}`}
+            >
+              Register
+            </button>
+          </div>
+        )}
 
         <div className="flex bg-gray-950 rounded-lg p-1 mb-6 border border-gray-800">
           <button

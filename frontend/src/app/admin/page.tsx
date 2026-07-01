@@ -16,16 +16,21 @@ interface Document {
 export default function AdminDashboard() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [isDemoWelcome, setIsDemoWelcome] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/v1/documents/", {
+      const response = await axios.get(`${API_URL}/api/v1/documents/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setDocuments(response.data);
+      return response.data;
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         router.push("/");
@@ -42,11 +47,29 @@ export default function AdminDashboard() {
       return;
     }
 
-    fetchDocuments();
-    // Poll for status updates
-    const interval = setInterval(fetchDocuments, 3000);
-    return () => clearInterval(interval);
+    if (window.location.search.includes("demo_welcome=true")) {
+      setIsDemoWelcome(true);
+    }
+
+    const checkDocs = async () => {
+      const docs = await fetchDocuments();
+      // Only set up polling if there are pending docs
+      if (docs && docs.some((d: any) => d.status !== "Ready" && d.status !== "Failed")) {
+        startPolling();
+      }
+    };
+    checkDocs();
   }, []);
+
+  const startPolling = () => {
+    const interval = setInterval(async () => {
+      const docs = await fetchDocuments();
+      // Stop polling if all are ready or failed
+      if (!docs || !docs.some((d: any) => d.status !== "Ready" && d.status !== "Failed")) {
+        clearInterval(interval);
+      }
+    }, 2000);
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,13 +83,14 @@ export default function AdminDashboard() {
     abortControllerRef.current = abortController;
 
     try {
-      await axios.post("http://localhost:8000/api/v1/documents/upload", formData, {
+      await axios.post(`${API_URL}/api/v1/documents/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`
         },
         signal: abortController.signal
       });
+      startPolling();
       fetchDocuments();
     } catch (err) {
       if (axios.isCancel(err)) {
@@ -118,6 +142,34 @@ export default function AdminDashboard() {
                 <span>Cancel</span>
               </button>
             )}
+            
+            {isDemoMode && documents.length === 0 && (
+              <button 
+                onClick={async () => {
+                  try {
+                    setUploading(true);
+                    const response = await fetch("/sample-document.txt");
+                    const blob = await response.blob();
+                    const file = new File([blob], "Athenis_Employee_Handbook.txt", { type: "text/plain" });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.files = dt.files;
+                      handleFileUpload({ target: { files: dt.files } } as any);
+                    }
+                  } catch (e) {
+                    console.error("Failed to load sample document", e);
+                    setUploading(false);
+                  }
+                }}
+                disabled={uploading}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 text-white px-6 py-3 rounded-xl transition-all font-medium border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+              >
+                <FileText className="w-5 h-5" />
+                <span>{uploading ? "Loading..." : "Load Sample Data"}</span>
+              </button>
+            )}
+
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -135,6 +187,42 @@ export default function AdminDashboard() {
             accept=".pdf,.docx,.txt,.md" 
           />
         </div>
+
+        {isDemoWelcome && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="bg-gray-900 border border-emerald-500/50 rounded-2xl p-8 shadow-[0_0_30px_rgba(16,185,129,0.15)] relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+            <h2 className="text-2xl font-bold text-white mb-4">Welcome to Athenis AI! 👋</h2>
+            <p className="text-gray-300 text-lg mb-6 max-w-3xl leading-relaxed">
+              Before you can start chatting with your AI knowledge assistant, you must construct a Knowledge Base. 
+              Please upload one or more documents, or use the <strong>Load Sample Data</strong> button above. 
+              Once document chunking, embedding, and indexing are complete, you can immediately begin asking questions.
+            </p>
+            
+            <div className="bg-gray-950 rounded-xl p-6 border border-gray-800">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Onboarding Checklist</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center space-x-3 text-emerald-400">
+                  <CheckCircle className="w-5 h-5" /> <span>Login to Admin Dashboard</span>
+                </li>
+                <li className={`flex items-center space-x-3 ${documents.length > 0 ? "text-emerald-400" : "text-gray-400"}`}>
+                  {documents.length > 0 ? <CheckCircle className="w-5 h-5" /> : <div className="w-5 h-5 border-2 border-gray-600 rounded-full" />} 
+                  <span>Upload a document</span>
+                </li>
+                <li className={`flex items-center space-x-3 ${documents.some(d => d.status === "Ready") ? "text-emerald-400" : documents.length > 0 ? "text-blue-400" : "text-gray-400"}`}>
+                  {documents.some(d => d.status === "Ready") ? <CheckCircle className="w-5 h-5" /> : documents.length > 0 ? <Loader2 className="w-5 h-5 animate-spin" /> : <div className="w-5 h-5 border-2 border-gray-600 rounded-full" />} 
+                  <span>Wait for vector indexing</span>
+                </li>
+                <li className={`flex items-center space-x-3 ${documents.some(d => d.status === "Ready") ? "text-white font-medium" : "text-gray-500"}`}>
+                  <div className="w-5 h-5 border-2 border-gray-600 rounded-full" /> 
+                  <span>Navigate to <button onClick={() => router.push("/chat")} className="text-emerald-500 hover:underline">Chat</button> to ask questions</span>
+                </li>
+              </ul>
+            </div>
+          </motion.div>
+        )}
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
           <div className="px-6 py-4 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">

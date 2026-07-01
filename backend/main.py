@@ -13,6 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 import structlog
 import traceback
+import os
 from asgi_correlation_id import correlation_id
 
 logger = structlog.get_logger(__name__)
@@ -65,9 +66,12 @@ async def global_exception_handler(request, exc):
     )
 
 # CORS configuration
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000,http://127.0.0.1:3000")
+allowed_origins = [url.strip() for url in frontend_url.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

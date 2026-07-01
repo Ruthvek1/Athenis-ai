@@ -9,6 +9,8 @@ export default function Dashboard() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   useEffect(() => {
     setIsMounted(true);
     if (!localStorage.getItem("token")) {
@@ -63,7 +65,7 @@ export default function Dashboard() {
       description: "Interactive Swagger UI for the FastAPI backend.",
       icon: Code,
       color: "bg-emerald-600",
-      href: "http://localhost:8000/docs",
+      href: `${API_URL}/docs`,
       external: true
     }
   ];

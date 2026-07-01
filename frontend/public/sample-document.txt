@@ -1,0 +1,28 @@
+# Athenis AI - Sample Employee Handbook
+
+## 1. Introduction
+Welcome to Athenis Corporation! We are thrilled to have you join our team. This handbook is designed to acquaint you with Athenis and provide you with information about working conditions, employee benefits, and some of the policies affecting your employment.
+
+## 2. Employment Policies
+- **Equal Employment Opportunity:** Athenis is an equal opportunity employer. We do not discriminate on the basis of race, color, religion, sex, national origin, age, disability, or any other characteristic protected by law.
+- **At-Will Employment:** Your employment with Athenis is "at-will." This means that either you or the company may terminate the employment relationship at any time, with or without cause, and with or without notice.
+
+## 3. Workplace Environment
+- **Office Hours:** Standard office hours are from 9:00 AM to 5:00 PM, Monday through Friday.
+- **Remote Work:** Employees may work remotely up to two days a week, subject to manager approval. Core collaboration hours (10:00 AM to 3:00 PM) must be observed regardless of location.
+- **Dress Code:** We maintain a casual dress code. However, if you are meeting with clients, professional business attire is required.
+
+## 4. Benefits
+- **Health Insurance:** Comprehensive health, dental, and vision coverage is available to all full-time employees starting on their first day of employment.
+- **Paid Time Off (PTO):** Employees accrue 15 days of PTO annually during their first three years, and 20 days annually thereafter.
+- **Retirement Plan:** Athenis offers a 401(k) plan with a company match of up to 4% of your eligible compensation.
+
+## 5. Security and Confidentiality
+- **Data Protection:** All employees must adhere strictly to the Data Protection Policy. Never share credentials, and always lock your workstation when unattended.
+- **Confidentiality:** Proprietary information, including AI models, algorithms, and client data, must remain strictly confidential and cannot be shared outside the organization without explicit authorization.
+
+## 6. Code of Conduct
+- **Professionalism:** We expect all employees to treat colleagues, clients, and partners with respect and professionalism.
+- **Harassment:** Athenis has a zero-tolerance policy for harassment or bullying of any kind. 
+
+Please acknowledge receipt of this handbook by signing the acknowledgment form provided by HR.

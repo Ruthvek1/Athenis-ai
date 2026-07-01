@@ -27,8 +27,12 @@ export default function Chat() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [demoDocsReady, setDemoDocsReady] = useState(true);
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     if (!localStorage.getItem("token")) {
@@ -37,7 +41,46 @@ export default function Chat() {
     if (localStorage.getItem("role") === "admin") {
       setIsAdmin(true);
     }
-  }, [router]);
+
+    if (isDemoMode) {
+      setDemoDocsReady(false);
+      
+      const checkDocs = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/api/v1/documents/`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          });
+          
+          if (res.data.some((d: any) => d.status === "Ready")) {
+            setDemoDocsReady(true);
+          } else if (res.data.length > 0) {
+            // Docs exist but none are ready, set up polling
+            startPolling();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      
+      checkDocs();
+    }
+  }, [router, isDemoMode]);
+
+  const startPolling = () => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/v1/documents/`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        if (res.data.some((d: any) => d.status === "Ready")) {
+          setDemoDocsReady(true);
+          clearInterval(interval);
+        }
+      } catch (e) {
+        clearInterval(interval);
+      }
+    }, 2000);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,7 +96,7 @@ export default function Chat() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/v1/chat/",
+        `${API_URL}/api/v1/chat/`,
         { query: userMessage.content, session_id: sessionId },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -186,18 +229,24 @@ export default function Chat() {
         {/* Input Area */}
         <div className="p-6 bg-gray-950 border-t border-gray-900">
           <div className="max-w-4xl mx-auto relative">
+            {!demoDocsReady && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-950/80 backdrop-blur-sm rounded-2xl border border-red-500/30 text-red-400 font-medium">
+                Document ingestion required. Please upload a document in the System Dashboard.
+              </div>
+            )}
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && demoDocsReady && handleSend()}
               placeholder="Ask Athenis anything..."
-              className="w-full bg-gray-900 border border-gray-700 rounded-2xl pl-6 pr-14 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-xl"
+              disabled={!demoDocsReady || loading}
+              className={`w-full bg-gray-900 border border-gray-700 rounded-2xl pl-6 pr-14 py-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-xl ${!demoDocsReady ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || loading}
-              className="absolute right-2 top-2 p-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-xl transition-colors"
+              disabled={!input.trim() || loading || !demoDocsReady}
+              className="absolute right-2 top-2 p-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-xl transition-colors z-20"
             >
               <Send className="w-5 h-5" />
             </button>
