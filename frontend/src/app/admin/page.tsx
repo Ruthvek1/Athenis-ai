@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Upload, FileText, CheckCircle, Loader2, ArrowLeft, RefreshCw, XCircle } from "lucide-react";
+import { Upload, FileText, CheckCircle, Loader2, ArrowLeft, RefreshCw, XCircle, Trash2 } from "lucide-react";
 import axios from "axios";
 
 interface Document {
@@ -109,6 +109,18 @@ export default function AdminDashboard() {
   const handleCancelUpload = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
+    }
+  };
+
+  const handleDeleteDocument = async (id: number) => {
+    try {
+      await axios.delete(`${API_URL}/api/v1/documents/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      fetchDocuments();
+    } catch (err) {
+      console.error("Failed to delete document", err);
+      alert("Failed to delete document.");
     }
   };
 
@@ -256,6 +268,13 @@ export default function AdminDashboard() {
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-medium text-gray-400 capitalize">{doc.status}</span>
                     {getStatusIcon(doc.status)}
+                    <button 
+                      onClick={() => handleDeleteDocument(doc.id)}
+                      className="ml-4 p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                      title="Delete document"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 </motion.div>
               ))

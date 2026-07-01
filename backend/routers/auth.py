@@ -52,6 +52,15 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Inactive user")
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # DEMO MODE FEATURE: Clear all old documents when the demo admin logs in
+    if form_data.username == "admin@athenis.ai":
+        from backend.models.document import Document
+        from backend.core.cache import CacheService
+        db.query(Document).delete()
+        db.commit()
+        CacheService.delete("documents_list")
+        
     return {
         "access_token": create_access_token(
             user.id, expires_delta=access_token_expires

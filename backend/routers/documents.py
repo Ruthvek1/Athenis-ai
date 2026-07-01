@@ -83,3 +83,17 @@ def get_documents(db: Session = Depends(get_db), current_user: User = Depends(ge
     CacheService.set("documents_list", results, expire=300)
     
     return results
+
+@router.delete("/{document_id}")
+def delete_document(document_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_admin_user)):
+    doc = db.query(Document).filter(Document.id == document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    db.delete(doc)
+    db.commit()
+    
+    # Invalidate document list cache
+    CacheService.delete("documents_list")
+    
+    return {"message": "Document deleted successfully"}
