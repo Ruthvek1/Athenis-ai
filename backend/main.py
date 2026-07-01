@@ -67,12 +67,17 @@ async def global_exception_handler(request, exc):
 
 # CORS configuration
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000,http://127.0.0.1:3000")
-allowed_origins = [url.strip() for url in frontend_url.split(",")]
+if frontend_url.strip() == "*":
+    allowed_origins = ["*"]
+    allow_creds = False
+else:
+    allowed_origins = [url.strip() for url in frontend_url.split(",")]
+    allow_creds = True
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=allow_creds,
     allow_methods=["*"],
     allow_headers=["*"],
 )
