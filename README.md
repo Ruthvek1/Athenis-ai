@@ -2,6 +2,8 @@
   <img src="frontend/public/assets/logo.png" alt="Athenis Logo" width="120" height="120" style="border-radius: 20%;" />
   <h1>Athenis AI Platform</h1>
   <p><strong>Enterprise-Grade, Cloud-Native Hybrid RAG Engine with Multi-Tenant Architecture</strong></p>
+  
+  <h3>🚀 <a href="https://athenis-ai-eight.vercel.app/" target="_blank">Live Demo Environment</a></h3>
 
   [![Python](https://img.shields.io/badge/Python-3.13-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
