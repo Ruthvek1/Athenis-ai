@@ -66,21 +66,27 @@ async def global_exception_handler(request, exc):
     )
 
 # CORS configuration
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000,http://127.0.0.1:3000")
+# Default to "*" to allow all origins for demo/dev. In production, set FRONTEND_URL to your specific domain(s).
+frontend_url = os.getenv("FRONTEND_URL", "*")
 if frontend_url.strip() == "*":
-    allowed_origins = ["*"]
-    allow_creds = False
+    # Wildcard mode: allow all origins (credentials must be False per CORS spec)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 else:
+    # Restricted mode: only allow specific origins
     allowed_origins = [url.strip() for url in frontend_url.split(",")]
-    allow_creds = True
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=allow_creds,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Request ID tracing
 from asgi_correlation_id import CorrelationIdMiddleware
