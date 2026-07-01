@@ -3,7 +3,12 @@
   <h1>Athenis AI Platform</h1>
   <p><strong>Enterprise-Grade, Cloud-Native Hybrid RAG Engine with Multi-Tenant Architecture</strong></p>
   
-  <h3>🚀 <a href="https://athenis-ai-eight.vercel.app/" target="_blank">Live Demo Environment</a></h3>
+  <br />
+  
+  <h2>✨ <a href="https://athenis-ai-eight.vercel.app/" target="_blank"><b>CLICK HERE TO TRY THE LIVE DEMO</b></a> ✨</h2>
+  <p><i>(Experience the full RAG pipeline and admin dashboard instantly — no setup required)</i></p>
+  
+  <br />
 
   [![Python](https://img.shields.io/badge/Python-3.13-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
   [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
