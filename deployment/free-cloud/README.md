@@ -8,12 +8,12 @@ To achieve a $0 footprint while preserving the decoupled architecture, we combin
 
 1. **Database:** Create a free project on [Supabase](https://supabase.com/). They provide PostgreSQL 15+ with the `pgvector` extension natively installed.
 2. **Redis:** Create a free serverless Redis database on [Upstash](https://upstash.com/).
-3. **Backend Container:** Create a free Web Service on [Koyeb](https://koyeb.com/) or [Render](https://render.com/). Deploy using the `deployment/free-cloud/backend.Dockerfile`.
+3. **Backend Container:** Create a free Web Service on [Render](https://render.com/). Deploy using the `deployment/free-cloud/backend.Dockerfile`.
 4. **Frontend:** Deploy the `frontend/` directory to [Vercel](https://vercel.com/) (Free).
 
 ## Required Environment Variables
 
-### Backend (Koyeb / Render)
+### Backend (Render)
 ```env
 DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[SUPABASE_ID].supabase.co:5432/postgres
 REDIS_URL=rediss://default:[PASSWORD]@[UPSTASH_ENDPOINT]:[PORT]
@@ -23,7 +23,7 @@ FRONTEND_URL=https://your-frontend.vercel.app
 
 ### Frontend (Vercel)
 ```env
-NEXT_PUBLIC_API_URL=https://your-backend.koyeb.app
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
 NEXT_PUBLIC_DEMO_MODE=true
 ```
 
