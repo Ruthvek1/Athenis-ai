@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (window.location.search.includes("demo_welcome=true")) {
+    if (isDemoMode || window.location.search.includes("demo_welcome=true")) {
       setIsDemoWelcome(true);
     }
 

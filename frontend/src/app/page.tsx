@@ -61,17 +61,8 @@ export default function Login() {
         localStorage.setItem("role", role);
         
         if (isDemoMode) {
-          try {
-            const docsResponse = await axios.get(`${API_URL}/api/v1/documents/`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (docsResponse.data.length === 0) {
-              router.push("/admin?demo_welcome=true");
-              return;
-            }
-          } catch (err) {
-            console.error("Failed to check documents", err);
-          }
+          router.push("/admin?demo_welcome=true");
+          return;
         }
         
         if (role === "admin") {
