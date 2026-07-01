@@ -26,7 +26,7 @@ export default function AdminDashboard() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/v1/documents/`, {
+      const response = await axios.get(`${API_URL}/api/v1/documents/?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setDocuments(response.data);
