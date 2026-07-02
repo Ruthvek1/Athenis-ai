@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Server, AlertTriangle, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import axios from "axios";
 
 export default function Login() {
@@ -13,6 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [backendStatus, setBackendStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const router = useRouter();
 
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
@@ -27,6 +28,36 @@ export default function Login() {
       setIsLogin(true);
     }
   }, [isDemoMode]);
+
+  // Check backend health
+  useEffect(() => {
+    let isMounted = true;
+    let interval: NodeJS.Timeout;
+    let retries = 0;
+
+    const checkHealth = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/health`, { timeout: 8000 });
+        if (res.status === 200 && isMounted) {
+          setBackendStatus("connected");
+          clearInterval(interval);
+        }
+      } catch (e) {
+        if (isMounted) {
+          retries++;
+          setBackendStatus(retries > 15 ? "disconnected" : "connecting");
+        }
+      }
+    };
+
+    checkHealth();
+    interval = setInterval(checkHealth, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [API_URL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,19 +120,55 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-4">
+      {/* Free Tier Warning Banner */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md mb-6 bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 shadow-lg"
+      >
+        <p className="text-blue-200 text-sm flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+          <span>
+            <strong>Free Tier Hosting Notice:</strong> The backend and database may spin down when idle. 
+            If buttons seem unresponsive, please wait a moment while the services wake up.
+          </span>
+        </p>
+      </motion.div>
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="max-w-md w-full bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-8"
       >
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6">
           <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-4">
             <BookOpen className="w-8 h-8 text-blue-500" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Athenis</h1>
-          <p className="text-gray-400 mt-2 text-center">AI-Powered RAG Knowledge Assistant</p>
+          <p className="text-gray-400 mt-2 text-center mb-4">AI-Powered RAG Knowledge Assistant</p>
+          
+          {/* Backend Connection Status */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-950 border border-gray-800">
+            <Server className="w-4 h-4 text-gray-500" />
+            <span className="text-xs font-medium text-gray-400">Backend:</span>
+            {backendStatus === "connecting" && (
+              <span className="flex items-center gap-1.5 text-xs text-yellow-500 font-medium bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                <Loader2 className="w-3 h-3 animate-spin" /> Waking up...
+              </span>
+            )}
+            {backendStatus === "connected" && (
+              <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="w-3 h-3" /> Connected
+              </span>
+            )}
+            {backendStatus === "disconnected" && (
+              <span className="flex items-center gap-1.5 text-xs text-red-500 font-medium bg-red-500/10 px-2 py-0.5 rounded-full">
+                <XCircle className="w-3 h-3" /> Offline
+              </span>
+            )}
+          </div>
         </div>
 
         {success && (
